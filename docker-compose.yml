@@ -1,0 +1,21 @@
+services:
+  api:
+    build:
+      context: ./apps/api
+    ports:
+      - "8000:8000"
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - DATA_DIR=/data
+      - DB_URL=sqlite:////data/db/app.db
+    volumes:
+      - ./data:/data
+  web:
+    build:
+      context: ./apps/web
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://api:8000
+    depends_on:
+      - api

@@ -1,0 +1,23 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+pydantic==2.8.2
+sqlalchemy==2.0.32
+aiosqlite==0.20.0
+python-dotenv==1.0.1
+numba>=0.59.0
+
+# audio
+ffmpeg-python==0.2.0
+soundfile==0.12.1
+librosa==0.10.2
+numpy>=2.0,<2.3
+scipy>=1.15.1
+
+# ASR
+faster-whisper==1.0.3
+
+# diarization
+pyannote.audio==4.0.4
+
+torch
