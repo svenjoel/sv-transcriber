@@ -1,83 +1,187 @@
-# sv-transcriber (upload → Swedish transcription → diarization → interactive editor)
+# sv-transcriber
 
-This repo is a **local-first** web app: upload Swedish audio/video, transcribe it, diarize speakers, and edit/rename speakers in an interactive UI.
+A modern web app for **transcribing Swedish audio/video**, identifying speakers, and navigating conversations with precision.
 
-It follows a proven pattern: **FastAPI backend + web GUI**, and uses `pyannote.audio` Community-1 for diarization.
+Built as a hands-on project exploring:
+- local-first AI
+- speaker diarization + memory
+- transcript UX beyond plain text
 
-## What you get (MVP)
-- Upload audio/video (mp3, wav, m4a, mp4…)
-- FFmpeg normalizes to mono 16kHz WAV
-- Transcription (default: `faster-whisper`) with `language=sv`
-- Speaker diarization with **pyannote Community-1**
-- Merge → speaker-attributed transcript segments
-- Web UI: upload, job progress, transcript viewer, speaker rename
-
-> Speaker “learning” (voiceprints) is scaffolded as an extension point, but is **not enabled** in this MVP.
+This is evolving from a **tool → into a transcript intelligence product**.
 
 ---
 
-## Prerequisites
-### Backend
-- Python 3.10+ (3.11 works)
-- FFmpeg installed and available on PATH
-- NVIDIA GPU optional
-- Hugging Face token for pyannote Community-1 (gated)
+## ✨ Features
+
+### 🎙️ Transcription
+- Upload audio or video files
+- Automatic speech-to-text transcription
+- Swedish-first (works for other languages too)
+
+---
+
+### 🧑‍🤝‍🧑 Speaker Identification (Diarization + Memory)
+- Automatically detects “who spoke when”
+- Persistent speaker recognition across recordings
+- Confidence scoring per speaker match
+- Auto-accept high-confidence matches (configurable)
+
+---
+
+### 💬 Transcript Experience
+- Chat-style transcript UI (per speaker)
+- Active segment highlighting
+- Auto-scroll to current segment
+- Inline speaker renaming
+
+---
+
+### 🎧 Audio Playback (Fully Synced)
+- Custom audio player (single timeline)
+- Click a transcript bubble → jump to exact timestamp
+- **Play only that segment** (auto-stop at segment end)
+- Smooth and accurate seeking
+
+---
+
+### 🎯 Segment Mode
+Clicking a transcript bubble activates:
+
+- 🎧 Playing selection indicator
+- Playback is limited to that segment only
+- Automatically exits when segment ends
+
+---
+
+### ⌨️ Keyboard Shortcuts
+
+Shortcuts are disabled while typing in inputs (e.g. renaming speakers).
+
+| Action | Shortcut |
+|--------|--------|
+| Play / Pause | `Space` |
+| Skip ±5 seconds | `← / →` |
+| Skip ±15 seconds | `Shift + ← / →` |
+| Previous / Next segment | `↑ / ↓` |
+
+---
+
+### 🧠 Speaker Manager
+- Rename speakers inline
+- Accept auto-suggestions
+- Clear overrides
+- Confidence indicators
+- Auto-save on blur
+
+---
+
+## 🏗️ Architecture
 
 ### Frontend
-- Node 18+ (or 20)
+- Next.js (App Router)
+- React (client components)
+- Custom transcript + audio UX
+
+### Backend
+- FastAPI
+- ffmpeg audio processing pipeline
+- matching
+- Range-enabled audio streaming (required for seeking)
+
+### 🧠 ASR Service (Local AI Runtime)
+
+The transcription pipeline runs in a **separate Python environment** for better isolation and performance.
+
+This service handles:
+- speech-to-text (KB Whisper)
+- speaker diarization
+- embedding generation for speaker recognition
 
 ---
 
-## Quickstart (local dev)
+## 🚀 Getting Started
 
-### 1) Backend
+Follow these steps to run the application locally.
+
+---
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/svenjoel/sv-transcriber.git
+cd sv-transcriber
+```
+
+### 2. Setup environment variables
+Create a backend .env file inside apps/api:
+```bash
+cp apps/api/.env.sample apps/api/.env
+```
+
+Add:
+- `HF_TOKEN=hf_your_token_here`
+
+Optinal
+- `SPEAKER_MATCH_THRESHOLD=0.75`
+- `SPEAKER_AUTO_LEARN=1`
+- `SPEAKER_AUTO_LEARN_THRESHOLD=0.85`
+- `SPEAKER_AUTO_LEARN_MAX=0.98`
+- `SPEAKER_MATCH_DEBUG=0`
+
+### 3. Backend (FastAPI)
 ```bash
 cd apps/api
 python -m venv venv
-# Windows: venv\Scripts\activate
-# macOS/Linux: source venv/bin/activate
+source venv/bin/activate     # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-cp .env.example .env
-# edit .env and set HF_TOKEN
-
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload
 ```
 
-Check: http://localhost:8000/health
+Backend runs on: `http://127.0.0.1:8000`
 
-### 2) Frontend
+---
+
+
+
+### 4) Setup ASR environment
+
+```bash
+cd apps/asr_service
+python -m venv asr_venv
+source asr_venv/bin/activate     # Windows: asr_venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+ASR service runs on: `http://127.0.0.1:8001`
+
+### 5. Frontend (Next.js)
 ```bash
 cd apps/web
 npm install
-cp .env.local.example .env.local
 npm run dev
 ```
 
-Open: http://localhost:3000
+Frontend runs on: `http://127.0.0.1:8000`
+
+### 6. Open the app
+
+Open `http://localhost:3000`
 
 ---
+## ⚠️ Important notes
+- This environment can use GPU (CUDA) if available
+- First startup may download ML models (can take time)
+- Uses HF_TOKEN for gated diarization models
+- Keep separate from API environment to avoid dependency conflicts
 
-## Environment variables
-Backend (`apps/api/.env`):
-- `HF_TOKEN` – Hugging Face access token (required for pyannote Community-1)
-- `DATA_DIR` – defaults to `../../data`
-- `DB_URL` – defaults to `sqlite:///../../data/db/app.db`
+## 🔄 Full system overview
+You now run two backend services + one frontend:
 
-Frontend (`apps/web/.env.local`):
-- `NEXT_PUBLIC_API_BASE` – defaults to `http://localhost:8000`
+| Service        | Port | Responsibility                         |
+|----------------|------|----------------------------------------|
+| API (FastAPI)  | 8000 | orchestration, storage, endpoints      |
+| ASR Service    | 8001 | transcription + diarization            |
+| Frontend       | 3000 | UI                                     |
 
----
 
-## API endpoints (MVP)
-- `POST /media/upload` → upload file
-- `POST /jobs` → start processing a media_id
-- `GET /jobs/{job_id}` → job status/progress
-- `GET /transcripts/{transcript_id}` → transcript JSON
-- `PUT /transcripts/{transcript_id}/rename-speaker?speaker=SPEAKER_00&name=Joel` → rename a speaker label
 
----
-
-## Notes
-- pyannote models are gated. You must accept conditions on the model page and use a token.
-- diarization quality varies with noise/overlap. The UI is meant for quick correction.
