@@ -148,7 +148,7 @@ Backend runs on: `http://127.0.0.1:8000`
 ```bash
 cd apps/asr_service
 python -m venv asr_venv
-source asr_venv/bin/activate     # Windows: asr_venv\Scripts\activate
+source asr_venv/bin/activate     # Windows: asr_venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
